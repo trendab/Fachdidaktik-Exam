@@ -146,7 +146,13 @@ const CARDS = [
   {v:"V6", q:"Bis zu welcher K-Stufe reicht Multiple Choice?", a:"Gut gemacht bis K5. Essayfragen ermöglichen K6. Der Inhalt einer Frage ist für ihr Niveau wichtiger als die Form."},
   {v:"V6", q:"Welche 2 Punkte der Frey-Checkliste sind die wichtigsten?", a:"Halbneu\nOhne Lehrerhilfe"},
   {v:"V6", q:"Wie viele SuS sollen eine Lernaufgabe erfolgreich lösen, und wie lange darf sie dauern?", a:"Mindestens 80 %.\n5–30 Minuten pro 50-Minuten-Lektion."},
-  {v:"V6", q:"Aus welchen 3 Teilen besteht eine Aufgabe nach Bruder und Sonnberger?", a:"Gegeben, Transformation (was man tut), Gesucht. Je nachdem, welche Teile bekannt sind: 8 Formate (A–H). Abbildung auf den Folien nachschauen."}
+  {v:"V6", q:"Aus welchen 3 Teilen besteht eine Aufgabe nach Bruder und Sonnberger?", a:"Gegeben, Transformation (was man tut), Gesucht. Je nachdem, welche Teile bekannt sind: 8 Formate (A–H). Abbildung auf den Folien nachschauen."},
+  {v:"V1", q:"Welche Lernziele hat V1 laut Skript?", a:"Im Skript keine formuliert.\nSinngemäss: die Konzepte des Katalogs nennen und ihren Bereichen zuordnen; den rechtlichen Rahmen kennen."},
+  {v:"V2", q:"Nenne die 3 Lernziele von V2 mit K-Stufe.", a:"1. Lernzieltaxonomien nennen (K1)\n2. Ziele und Prüfungsfragen taxieren (K3)\n3. Operationalisierte Lernziele formulieren (K3)"},
+  {v:"V3", q:"Nenne die 3 Lernziele von V3 mit K-Stufe.", a:"1. Ein Thema inhaltlich strukturieren (K3)\n2. Einen Lektionsablauf nach dem Artikulationsschema BioETH umsetzen (K3)\n3. Einen konkreten Lektionsablauf zu einem Thema entwerfen (K6)"},
+  {v:"V4", q:"Nenne die 5 Lernziele von V4 mit K-Stufe.", a:"1. Didaktische Reduktion mit Rekonstruktion vergleichen (K2)\n2. Eine Unterrichtsmethode schematisch einteilen (K3)\n3. Prozessgewinne und -verluste bei Gruppenarbeit aufzeigen (K3)\n4. Lösungsansätze für Prozessverluste finden (K4)\n5. Zum Puzzle ein Beispiel nennen (K1) und es umsetzen (K3)"},
+  {v:"V5", q:"Nenne die 2 Lernziele von V5 mit K-Stufe.", a:"1. 10 Regeln zu Präsentationsprogrammen, Wandtafel und Visualizer nennen und anwenden (K1, K3)\n2. 10 Prüfpunkte für die Qualität eines Schulbuchs nennen und anwenden (K1, K3)"},
+  {v:"V6", q:"Welche Lernziele hat V6 laut Skript?", a:"Im Skript keine formuliert.\nSinngemäss: Aufgabenformate unterscheiden; eine Lernaufgabe nach Frey mit der Checkliste konzipieren."}
 ];
 
 /* Zuordnen: Begriff -> Kategorie */
@@ -216,7 +222,11 @@ const SORTS = [
     ["Vorlesen","Meso: Handlungsmuster"],["Praktikum","Meso: Handlungsmuster"],["Lernspiel","Meso: Handlungsmuster"],["Schülervortrag","Meso: Handlungsmuster"],["Mindmap","Meso: Handlungsmuster"],["Portfolio","Meso: Handlungsmuster"],["Schülerdiskussion","Meso: Handlungsmuster"],["Posterpräsentation","Meso: Handlungsmuster"],
     ["Einstieg – Erarbeitung – Ergebnissicherung","Meso: Verlaufsform"],["Artikulationsschema nach Aebli","Meso: Verlaufsform"],["Artikulationsschema nach Roth","Meso: Verlaufsform"],
     ["Projektarbeit (kooperativer Unterricht)","Makro: Grossform"],["Werkstattunterricht","Makro: Grossform"],["Maturitätsarbeit","Makro: Grossform"],["Klassenrat (gemeinsamer Unterricht)","Makro: Grossform"]
-   ]}
+   ]},
+  {v:"V2", title:"Lernziele V2 → K-Stufe", prompt:"Welche K-Stufe hat dieses Lernziel der Vorlesung?", cats:["K1","K3"], items:[["Lernzieltaxonomien nennen","K1"],["Ziele und Prüfungsfragen taxieren","K3"],["Operationalisierte Lernziele formulieren","K3"]]},
+  {v:"V3", title:"Lernziele V3 → K-Stufe", prompt:"Welche K-Stufe hat dieses Lernziel der Vorlesung?", cats:["K3","K6"], items:[["Ein Thema inhaltlich strukturieren","K3"],["Einen Lektionsablauf nach dem Artikulationsschema BioETH umsetzen","K3"],["Einen konkreten Lektionsablauf zu einem Thema entwerfen","K6"]]},
+  {v:"V4", title:"Lernziele V4 → K-Stufe", prompt:"Welche K-Stufe hat dieses Lernziel der Vorlesung?", cats:["K1","K2","K3","K4"], items:[["Didaktische Reduktion mit Rekonstruktion vergleichen","K2"],["Eine Unterrichtsmethode schematisch einteilen","K3"],["Prozessgewinne und -verluste bei Gruppenarbeit aufzeigen","K3"],["Lösungsansätze für Prozessverluste finden","K4"],["Zum Puzzle ein Beispiel nennen","K1"],["Das Puzzle umsetzen","K3"]]},
+  {v:"V5", title:"Lernziele V5 → K-Stufe", prompt:"Welche K-Stufe hat dieses Lernziel der Vorlesung?", cats:["K1","K3"], items:[["10 Regeln zu Folien, Wandtafel und Visualizer nennen","K1"],["Diese Regeln auf eigene Folien anwenden","K3"],["10 Prüfpunkte für ein Schulbuch nennen","K1"],["Ein Schulbuch mit den Prüfpunkten beurteilen","K3"]]}
 ];
 
 /* Reihenfolge */
@@ -263,7 +273,9 @@ const TFS = [
   {v:"V6", s:"Eine Lernaufgabe nach Frey wiederholt bekannten Stoff.", t:false, why:"Halbneu: neuer Stoff, keine Repetition."},
   {v:"V1", s:"Für das Schulwesen ist in der Schweiz der Bund zuständig.", t:false, why:"Die Kantone (BV Art. 62)."},
   {v:"V1", s:"Gemäss MAR 2024 haben MINT-Fächer zusammen mindestens 27 % der Unterrichtszeit.", t:true, why:"§18: Mathematik, Informatik, Biologie, Chemie, Physik."},
-  {v:"V1", s:"Time on Task ist bei Gruppenarbeit immer höher als bei Frontalunterricht.", t:false, why:"On Task heisst im Kopf mitmachen; das kann bei gutem Frontalunterricht eher der Fall sein."}
+  {v:"V1", s:"Time on Task ist bei Gruppenarbeit immer höher als bei Frontalunterricht.", t:false, why:"On Task heisst im Kopf mitmachen; das kann bei gutem Frontalunterricht eher der Fall sein."},
+  {v:"V1", s:"Bei Struktur und Funktion kommt es auf die Formulierung nicht an, solange der Inhalt stimmt.", t:false, why:"Faller: sauber formulieren, damit kein Intelligent-Design-Denken entsteht."},
+  {v:"V1", s:"Konstruktivistisches Lernen wird am ehesten durch geschlossene Fragen ausgelöst.", t:false, why:"Es entsteht durch Impulsfragen; geschlossene Fragen lösen es selten aus."}
 ];
 
 /* ===================== LOGIK ===================== */
