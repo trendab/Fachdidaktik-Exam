@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FD Biologie I – Listen-Trainer V1–V6</title>
+<style>
+:root{
+  --bg:#f6f5f1; --card:#ffffff; --ink:#1f2328; --muted:#5f6670; --line:#e2e0d8;
+  --accent:#2563eb; --accent-soft:#e7effd; --good:#1f8a4c; --good-soft:#e5f4e9;
+  --bad:#c0392b; --bad-soft:#fbebea; --warn:#b7791f;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#16181c; --card:#1f2228; --ink:#eceff3; --muted:#a2a9b3; --line:#30343c;
+    --accent:#6ea0ff; --accent-soft:#22304a; --good:#4cc07f; --good-soft:#1d3327; --bad:#ff7b6e; --bad-soft:#3a2321; }
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+header h1{font-size:22px;margin:0 0 4px}
+header p{margin:0;color:var(--muted);font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.chip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font-size:15px;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.label{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:18px}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:10px}
+.mode{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;cursor:pointer;text-align:left;color:var(--ink);font:inherit}
+.mode b{display:block;font-size:16px}
+.mode span{color:var(--muted);font-size:13px}
+.mode[disabled]{opacity:.4;cursor:not-allowed}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-top:16px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:8px;color:var(--muted);font-size:14px}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:10px 0 16px}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.tag{display:inline-block;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 8px}
+.q{font-size:19px;font-weight:600;margin:10px 0 14px}
+.answer{border-top:1px dashed var(--line);margin-top:12px;padding-top:12px;white-space:pre-line}
+.btn{border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:600;cursor:pointer;background:var(--accent);color:#fff}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.good{background:var(--good)}
+.btn.bad{background:var(--bad)}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.opt{display:block;width:100%;text-align:left;margin:8px 0;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
+.opt.right{background:var(--good-soft);border-color:var(--good)}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.feedback{margin-top:10px;font-size:15px}
+.feedback.ok{color:var(--good)} .feedback.no{color:var(--bad)}
+.order-list{list-style:none;padding:0;margin:0}
+.order-list li{display:flex;align-items:center;gap:8px;padding:10px 12px;margin:6px 0;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.order-list li .n{width:24px;color:var(--muted);font-variant-numeric:tabular-nums}
+.order-list li .t{flex:1}
+.order-list li button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;width:38px;height:38px;font-size:18px;cursor:pointer}
+.order-list li.right{border-color:var(--good);background:var(--good-soft)}
+.order-list li.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.result{font-size:40px;font-weight:700;margin:6px 0}
+.small{font-size:13px;color:var(--muted)}
+footer{margin-top:28px;font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Fachdidaktik Biologie I · Listen-Trainer</h1>
+  <p>Vorlesungen V1–V6 · Faller, ETH Zürich, HS 2026 · Prüfung 10.12.2026</p>
+</header>
+
+<div id="home">
+  <div class="label">1 · Vorlesung wählen</div>
+  <div class="row" id="lectures"></div>
+  <div class="label">2 · Modus wählen</div>
+  <div class="modes" id="modes"></div>
+  <div class="panel small" id="stats"></div>
+</div>
+
+<div id="play" class="panel" hidden></div>
+
+<footer>Inhalte aus Fallers Skripten HS 2026 und der Prüfung 2024. Fehler werden nur in diesem Browser gespeichert.</footer>
+</div>
+
+<script>
+/* ===================== INHALT ===================== */
+const LECTURES = {
+  V1: "Ziele und Konzepte",
+  V2: "Lernziele",
+  V3: "Unterricht planen",
+  V4: "Methoden",
+  V5: "Medien",
+  V6: "Aufgaben"
+};
+
+/* Karteikarten: Frage -> Antwort */
+const CARDS = [
+  // V1
+  {v:"V1", q:"Welche 7 Bereiche hat Fallers Katalog der fachdidaktischen Konzepte?", a:"Lernende und Lehrende\nFachliches, fächerübergreifend\nFachliches, spezifisch biologisch\nKonzeptionierung\nMethodik\nMedien\nEvaluation und Feedback"},
+  {v:"V1", q:"Nenne die 3 spezifisch biologischen Konzepte.", a:"Proximate und ultimate Betrachtungsweise\nStruktur und Funktion\nÖkologische, organismische, zelluläre und molekulare Verknüpfungen"},
+  {v:"V1", q:"Nenne die 5 fächerübergreifenden fachlichen Konzepte.", a:"Fachliche Schülernähe\nWissenstheorie und Wissenschaftsmethodik\nWissenschaftsgeschichte, -gegenwart und -utopien\nWirkung menschlichen Tuns und Lassens\nExemplarität"},
+  {v:"V1", q:"Nenne die 7 Konzepte aus dem Bereich Methodik.", a:"Konstruktivismus\nKognitive Schüleraktivität inkl. Time on Task\nModifikation vorwissenschaftlicher Konzepte\nFaktenwissen sowie Transfer- und Synthesefähigkeit\nBinnendifferenzierung\nPraktisch biologisch-naturwissenschaftliches Lernen\nUnterrichts- und Arbeitsform"},
+  {v:"V1", q:"Welche Inputkanäle unterscheidet Faller?", a:"visuell-schriftlich\nvisuell-grafisch, gegenständlich und akustisch\ndigital und analog"},
+  {v:"V1", q:"Welche Outputkanäle unterscheidet Faller?", a:"verbal, grafisch und gestalterisch-gegenständlich\nmündlich und schriftlich\ndigital und analog"},
+  {v:"V1", q:"Was heisst «proximat» und «ultimat», und was sagt Faller dazu?", a:"Proximat: Wie funktioniert es?\nUltimat: Warum ist es evolutiv entstanden?\nBeide nie zeitlich auseinanderreissen. Monatelang Physiologie ohne evolutive Dimension «ist falsch»."},
+  {v:"V1", q:"Was bedeutet «Time on Task» nach Faller?", a:"Möglichst viel Zeit, in der die SuS im Kopf aktiv mitmachen. Das kann bei gutem Frontalunterricht eher der Fall sein als bei einer Gruppenarbeit."},
+  {v:"V1", q:"Wer ist in der Schweiz für das Schulwesen zuständig, und wer vermittelt?", a:"Die Kantone (Bundesverfassung Art. 62).\nVermittelnde Instanz: EDK, die Konferenz der 26 kantonalen Bildungsdirektorinnen und -direktoren."},
+  {v:"V1", q:"Was regelt das MAR 2024 in §8 und §18?", a:"§8: Lehrpersonen brauchen einen universitären Master.\n§18: Mathematik, Informatik, Biologie, Chemie und Physik zusammen mindestens 27 % der Unterrichtszeit."},
+  {v:"V1", q:"Lehrplan und Stundentafel: Was regelt was, und wer entscheidet?", a:"Lehrplan = Inhalt, meist von der Fachschaft bestimmt.\nStundentafel = zeitlicher Umfang, der Konvent stimmt ab.\nÄnderungen genehmigt der kantonale Bildungsrat. Der eidgenössische Rahmenlehrplan ist einzuhalten."},
+  // V2
+  {v:"V2", q:"Nenne die 3 Ebenen des Zielebenenmodells.", a:"Leitidee\nDispositionsziel\nOperationalisiertes Lernziel"},
+  {v:"V2", q:"Welche 3 Elemente hat ein vollständiges operationalisiertes Lernziel?", a:"1. Eindeutiges Verb (erwartetes Endverhalten)\n2. Bedingungen (womit, in welcher Zeit)\n3. Beurteilungsmassstab (wie viele, wie gut)"},
+  {v:"V2", q:"Nenne die 6 K-Stufen nach Anderson & Krathwohl.", a:"K1 erinnern\nK2 verstehen\nK3 anwenden\nK4 analysieren\nK5 evaluieren\nK6 erschaffen"},
+  {v:"V2", q:"Was ist der Unterschied zwischen Bloom und Anderson & Krathwohl bei K5 und K6?", a:"Bloom: K5 Synthese, K6 Bewerten.\nAnderson & Krathwohl (Faller): K5 evaluieren, K6 erschaffen."},
+  {v:"V2", q:"Was ist ein plastisches Lernziel?", a:"Die vereinfachte Version eines Lernziels für die SuS («Du kannst …»). Ein oder zwei der drei Elemente fallen weg. Ideal: 1–2 pro Lektion."},
+  {v:"V2", q:"Was zeichnet ein Dispositionsziel aus?", a:"Eine Verhaltensbereitschaft oder Haltung, die bleiben soll. Nicht prüfbar, darf mutig sein. Indoktrinationsverbot beachten."},
+  {v:"V2", q:"Welche zwei Wissensarten gibt es?", a:"Deklarativ: Fakten und Konzepte, man kann sie sagen.\nProzedural: Abläufe, man kann sie tun."},
+  {v:"V2", q:"Wozu dienen die 16 Gesichtspunkte (Bad Hersfelder Empfehlungen 1976)?", a:"Sie helfen, eine Leitidee zu formulieren und zu begründen: Warum unterrichten wir das?"},
+  // V3
+  {v:"V3", q:"Nenne die 4 Planungsbereiche nach Faller.", a:"Semesterplanung\nPlanung von Unterrichtseinheiten\nPlanen und Vorbereiten einer einzelnen Lektion\nPlanungen im Umfeld des Unterrichts"},
+  {v:"V3", q:"Was passiert in Phase 4 des BioETH-Schemas, und worauf ist zu achten?", a:"Selbständige Arbeit an einer konstruktivistischen Lernaufgabe. Kernphase. Die Lehrperson ist in den ersten Minuten überflüssig. Bei Gruppenarbeit muss die Aufgabe komplexer sein."},
+  {v:"V3", q:"Worin unterscheiden sich Phase 5 und Phase 6 des BioETH-Schemas?", a:"Phase 5: verbliebene Probleme und Fehlkonzepte bearbeiten, ohne Blossstellen, keine fertigen Lösungsblätter.\nPhase 6: Konsolidierung und erster Transfer, das Gelernte an einem neuen Beispiel prüfen."},
+  {v:"V3", q:"Welche Ansätze vereint das Modell nach Beckmann?", a:"Klafki (Didaktische Analyse), Kramp sowie Heimann und Schulz."},
+  {v:"V3", q:"Welche Elemente des IU gehören zu «Was und Wozu»?", a:"1 Thema\n2 Lernziele angeben\n3 Lernziele begründen"},
+  {v:"V3", q:"Welche Elemente des IU gehören zu «Wie»?", a:"4 Stundenablauf\n5 Beamer/Tafel\n6 Eventuell Mitplanung\n7 Kurz halten"},
+  {v:"V3", q:"Welche Elemente des IU gehören zu «Beziehung»?", a:"8 Positive Erwartungen\n9 Persönliche Einstellung\n10 Thema verknüpfen\n11 Vorwissen benützen"},
+  // V4
+  {v:"V4", q:"Didaktische Reduktion vs. Rekonstruktion: Was ist der Kernunterschied?", a:"Reduktion verringert die Komplexität.\nRekonstruktion bringt das Thema in Schülernähe und gibt ihm Relevanz; kann Reduktion enthalten, geht aber darüber hinaus und kann die Komplexität erhöhen."},
+  {v:"V4", q:"Was passiert mit Reduktion und Rekonstruktion in höheren Klassen?", a:"Reduktion tritt zurück.\nRekonstruktion bleibt gleich wichtig."},
+  {v:"V4", q:"Nenne die 3 Teile des Modells der didaktischen Rekonstruktion (Kattmann).", a:"Fachliche Klärung\nLernpotenzial-Diagnose (Schülervorstellungen)\nDidaktische Strukturierung"},
+  {v:"V4", q:"Nenne die 3 Ebenen des Methodenmodells nach Meyer.", a:"Mikromethodik (Inszenierungstechniken)\nMesomethodik (Sozialformen, Handlungsmuster, Verlaufsformen)\nMakromethodik (methodische Grossformen)"},
+  {v:"V4", q:"Nenne 5 Inszenierungstechniken. (Prüfung 2024)", a:"z. B. fragen, antworten, verrätseln, provozieren, verkleinern, zitieren, dramatisieren, unterbrechen, laut denken"},
+  {v:"V4", q:"Nenne die 4 methodischen Grossformen nach Meyer.", a:"Gemeinsamer Unterricht (z. B. Klassenrat)\nKooperativer Unterricht (z. B. Projektarbeit)\nLehrgangsförmiger Unterricht (z. B. Frontalunterricht)\nIndividualisierter Unterricht (z. B. Werkstatt, Maturitätsarbeit)"},
+  {v:"V4", q:"Wie lautet die Bilanzformel für Gruppenleistung (nach Dubs)?", a:"Tatsächliche Gruppenleistung = potenzielle Leistung − Prozessverluste + Prozessgewinne"},
+  {v:"V4", q:"Nenne 5 erfolgserhöhende Faktoren für Gruppenarbeit.", a:"Hohes Vorwissen und Ungewissheitstoleranz\nGeringer Konformitätsdruck\nBefruchtende, nicht spaltende Heterogenität\nGemeinsames Ziel, hohe Identifikation\nKooperatives Verhalten (kein Trittbrettfahren)\nErgänzende Rollen\nProduktive Kommunikation\nBewusster Einsatz kognitiver Prozesse"},
+  {v:"V4", q:"Nenne 5 Vorteile der Einzelarbeit.", a:"Hohe kognitive Forderung an jeden\nHohe Time on Task\nFördert echtes Selbstvertrauen\nEntspricht den Prüfungsformen\nIdeal für konstruktivistisches Lernen\nRuhe im Zimmer\nErmöglicht 1:1-Coaching"},
+  {v:"V4", q:"Für welche Themen eignet sich das Puzzle, und was ist Puzzle-Plus?", a:"Themen, die sich in 3–5 Untereinheiten gliedern lassen.\nPuzzle-Plus: eine Syntheseaufgabe, die nur lösbar ist, wenn alle Experten beitragen."},
+  // V5
+  {v:"V5", q:"Welche Schriftgrösse verlangt Faller auf Präsentationsfolien?", a:"Mindestens 20 pt, besser 24 pt."},
+  {v:"V5", q:"Was gilt bei Farben auf Folien?", a:"Höchstens 3 Farben, als Gliederung oder Hervorhebung.\nNie rot auf blau oder blau auf rot.\nGelb vermeiden.\nCa. 9 % haben eine Rot-Grün-Schwäche."},
+  {v:"V5", q:"Nenne die 4 Funktionen der Wandtafel (nach Winnenburg).", a:"Tafelbild als Unterrichtseinstieg\nals Ergebnisvergleich\nals Ergebnissicherung\nals Lernzielkontrolle"},
+  {v:"V5", q:"Nenne die 8 Gesetze des Sehens.", a:"Figur-Grund-Kontrast\nNähe\nÄhnlichkeit\nEinfachheit\nGlatt durchgehende Linie\nSymmetrie\nDynamik von links nach rechts\nObjektive Einstellung (gleiche Farbe = gleiche Funktion)"},
+  {v:"V5", q:"Nenne 5 typische Fehlerquellen an der Wandtafel.", a:"Schriftbild, Kreiden- und Farbwahl\nFehlende Titelhierarchie\nLichtverhältnisse, Schatten\nZu hohe Informationsdichte\nGemälde statt einfacher Strichskizzen"},
+  {v:"V5", q:"Nenne die 4 Kriterien für Tafelbilder.", a:"Einbezug in den Unterrichtsprozess\nEntsteht vor den Augen der SuS (Genese, korrigierbar)\nLesbar von der hintersten Bank\nGrafisch gestaltet, aufs Wesentliche konzentriert"},
+  {v:"V5", q:"Wie lange darf der Visualizer pro 45-Minuten-Lektion laufen?", a:"Höchstens 15 Minuten. Rest der Zeit: andere Techniken."},
+  {v:"V5", q:"Warum setzen viele Schweizer Lehrpersonen Schulbücher zurückhaltend ein? (3 Gründe)", a:"Meist auf das deutsche Gymnasium ausgerichtet\nLehrpläne verschieden je Kanton und Schule\nAbwehr gegen den «heimlichen Lehrplan»"},
+  {v:"V5", q:"Nenne Prüfpunkte für die äussere Qualität eines Schulbuchs.", a:"Papierqualität, Druck, Bund\nÜbersichtlichkeit\nIllustrationen\nNiveau\nInhaltsverzeichnis\nStichwortverzeichnis, Glossar\nZusammenfassungen\nPraxisorientierung\nFragenteil zur Erkenntnisförderung"},
+  // V6
+  {v:"V6", q:"Nenne 3 Gründe für verschiedene Aufgabenformate.", a:"Entwicklung unterschiedlicher kognitiver Fähigkeiten\nEinführung in naturwissenschaftliche Methodik\nVermeidung von Monotonie"},
+  {v:"V6", q:"Wie ist eine gute Multiple-Choice-Aufgabe aufgebaut?", a:"1. Einführung und klare Frage\n2. Eine richtige Antwort und 2–4 Distraktoren\n3. Rückmeldungen zu jeder Antwort"},
+  {v:"V6", q:"Bis zu welcher K-Stufe reicht Multiple Choice?", a:"Gut gemacht bis K5. Essayfragen ermöglichen K6. Der Inhalt einer Frage ist für ihr Niveau wichtiger als die Form."},
+  {v:"V6", q:"Welche 2 Punkte der Frey-Checkliste sind die wichtigsten?", a:"Halbneu\nOhne Lehrerhilfe"},
+  {v:"V6", q:"Wie viele SuS sollen eine Lernaufgabe erfolgreich lösen, und wie lange darf sie dauern?", a:"Mindestens 80 %.\n5–30 Minuten pro 50-Minuten-Lektion."},
+  {v:"V6", q:"Aus welchen 3 Teilen besteht eine Aufgabe nach Bruder und Sonnberger?", a:"Gegeben, Transformation (was man tut), Gesucht. Je nachdem, welche Teile bekannt sind: 8 Formate (A–H). Abbildung auf den Folien nachschauen."}
+];
+
+/* Zuordnen: Begriff -> Kategorie */
+const SORTS = [
+  {v:"V1", title:"Konzept → Bereich", prompt:"Zu welchem Bereich gehört dieses Konzept?",
+   cats:["Fachliches, fächerübergreifend","Fachliches, biologisch","Konzeptionierung","Methodik","Medien","Evaluation und Feedback"],
+   items:[
+    ["Fachliche Schülernähe","Fachliches, fächerübergreifend"],
+    ["Wissenstheorie und Wissenschaftsmethodik","Fachliches, fächerübergreifend"],
+    ["Wissenschaftsgeschichte, -gegenwart und -utopien","Fachliches, fächerübergreifend"],
+    ["Wirkung menschlichen Tuns und Lassens","Fachliches, fächerübergreifend"],
+    ["Exemplarität","Fachliches, fächerübergreifend"],
+    ["Proximate und ultimate Betrachtungsweise","Fachliches, biologisch"],
+    ["Struktur und Funktion","Fachliches, biologisch"],
+    ["Ökologische, organismische, zelluläre und molekulare Verknüpfungen","Fachliches, biologisch"],
+    ["Vernetzung im Stoffaufbau","Konzeptionierung"],
+    ["Von der Primarstufe bis zur Hochschulreife","Konzeptionierung"],
+    ["Konstruktivismus","Methodik"],
+    ["Kognitive Schüleraktivität inkl. Time on Task","Methodik"],
+    ["Modifikation vorwissenschaftlicher Konzepte","Methodik"],
+    ["Binnendifferenzierung","Methodik"],
+    ["Praktisch biologisch-naturwissenschaftliches Lernen","Methodik"],
+    ["Unterrichts- und Arbeitsform","Methodik"],
+    ["Objektnähe und Abstraktion","Medien"],
+    ["Orchestrierung der Inputkanäle","Medien"],
+    ["Orchestrierung der Outputkanäle","Medien"],
+    ["Transparent Leistung einfordern und bewerten","Evaluation und Feedback"],
+    ["Geschlossene Feedbackzyklen","Evaluation und Feedback"]
+   ]},
+  {v:"V2", title:"Satz → Zielebene", prompt:"Welche Zielebene ist das?",
+   cats:["Leitidee","Dispositionsziel","Operationalisiertes Lernziel"],
+   items:[
+    ["«Stofftransporte in lebenden Systemen sind von grosser Bedeutung …» (Prüfung 2024)","Leitidee"],
+    ["«Nach dieser Lektion messen die SuS regelmässig ihren Blutdruck …» (Prüfung 2024)","Dispositionsziel"],
+    ["«Die Schüler können mindestens ein Beispiel der Diffusion und der Osmose nennen.» (Prüfung 2024)","Operationalisiertes Lernziel"],
+    ["«Die SuS können ohne Hilfsmittel drei Merkmale eines Vielzellers nennen.»","Operationalisiertes Lernziel"],
+    ["«Die SuS widersprechen künftig, wenn von ‹höher entwickelten› Lebewesen die Rede ist.»","Dispositionsziel"],
+    ["«Der Übergang zur Vielzelligkeit ist einer der grossen Übergänge der Evolution.»","Leitidee"],
+    ["«Die SuS können in 10 Minuten die Phasen der Mitose in die richtige Reihenfolge bringen.»","Operationalisiertes Lernziel"],
+    ["«Die SuS achten beim Einkauf künftig auf die Herkunft von Lebensmitteln.»","Dispositionsziel"]
+   ]},
+  {v:"V2", title:"Beschreibung → K-Stufe", prompt:"Welche K-Stufe nach Anderson & Krathwohl?",
+   cats:["K1 erinnern","K2 verstehen","K3 anwenden","K4 analysieren","K5 evaluieren","K6 erschaffen"],
+   items:[
+    ["Gelerntes Wissen abrufen und wiedererkennen","K1 erinnern"],
+    ["Einen Sachverhalt mit eigenen Worten erklären","K2 verstehen"],
+    ["Gelerntes in einer neuen Situation einsetzen","K3 anwenden"],
+    ["Ein Problem in Teile zerlegen, Widersprüche aufdecken","K4 analysieren"],
+    ["Den Wert von Ideen mit Kriterien beurteilen","K5 evaluieren"],
+    ["Aus Elementen eine neue Struktur entwerfen","K6 erschaffen"],
+    ["«Nennen Sie die Phasen der Mitose.»","K1 erinnern"],
+    ["«Entwerfen Sie ein Experiment, ob Kresse zum Keimen Licht braucht.»","K6 erschaffen"],
+    ["«Beurteilen Sie die Aussage, Bakterien seien primitiver als Menschen.»","K5 evaluieren"],
+    ["«Erklären Sie, warum Blut in den Venen nicht zurückfliesst.»","K2 verstehen"]
+   ]},
+  {v:"V2", title:"Verb: eindeutig oder unklar?", prompt:"Taugt dieses Verb für ein operationalisiertes Lernziel?",
+   cats:["eindeutig","unklar, vermeiden"],
+   items:[
+    ["nennen","eindeutig"],["definieren","eindeutig"],["erklären","eindeutig"],["unterscheiden","eindeutig"],["vergleichen","eindeutig"],["aufzählen","eindeutig"],["gegenüberstellen","eindeutig"],
+    ["verstehen","unklar, vermeiden"],["kennen lernen","unklar, vermeiden"],["wissen","unklar, vermeiden"],["erkennen","unklar, vermeiden"],["glauben","unklar, vermeiden"],["Bescheid wissen","unklar, vermeiden"]
+   ]},
+  {v:"V4", title:"Methode → Ebene (Meyer)", prompt:"Wohin gehört diese Methode im Drei-Ebenen-Modell?",
+   cats:["Mikro: Inszenierungstechnik","Meso: Sozialform","Meso: Handlungsmuster","Meso: Verlaufsform","Makro: Grossform"],
+   items:[
+    ["verrätseln","Mikro: Inszenierungstechnik"],["provozieren","Mikro: Inszenierungstechnik"],["verkleinern","Mikro: Inszenierungstechnik"],["zitieren","Mikro: Inszenierungstechnik"],["dramatisieren","Mikro: Inszenierungstechnik"],["unterbrechen","Mikro: Inszenierungstechnik"],["laut denken","Mikro: Inszenierungstechnik"],
+    ["Plenumsunterricht","Meso: Sozialform"],["Gruppenunterricht","Meso: Sozialform"],["Tandemarbeit (Partnerarbeit)","Meso: Sozialform"],["Einzelarbeit (Stillarbeit)","Meso: Sozialform"],
+    ["Vorlesen","Meso: Handlungsmuster"],["Praktikum","Meso: Handlungsmuster"],["Lernspiel","Meso: Handlungsmuster"],["Schülervortrag","Meso: Handlungsmuster"],["Mindmap","Meso: Handlungsmuster"],["Portfolio","Meso: Handlungsmuster"],["Schülerdiskussion","Meso: Handlungsmuster"],["Posterpräsentation","Meso: Handlungsmuster"],
+    ["Einstieg – Erarbeitung – Ergebnissicherung","Meso: Verlaufsform"],["Artikulationsschema nach Aebli","Meso: Verlaufsform"],["Artikulationsschema nach Roth","Meso: Verlaufsform"],
+    ["Projektarbeit (kooperativer Unterricht)","Makro: Grossform"],["Werkstattunterricht","Makro: Grossform"],["Maturitätsarbeit","Makro: Grossform"],["Klassenrat (gemeinsamer Unterricht)","Makro: Grossform"]
+   ]}
+];
+
+/* Reihenfolge */
+const ORDERS = [
+  {v:"V3", title:"Artikulationsschema BioETH (Phasen 0–7)", items:["Direkte Vorbereitung","Kognitive Aktivierung und erster Dialog","Advance Organizer mit Bezug zum Vorwissen","Informationsinput","Selbständige Arbeit an einer konstruktivistischen Lernaufgabe","Bearbeitung verbliebener Probleme und Fehlkonzepte","Konsolidierung des Wissens und erster Transfer","Sahnehäubchen"]},
+  {v:"V3", title:"Modell nach Beckmann (7 Schritte)", items:["Erster vorläufiger Schritt: Thema, vage Lernziele","Sachgrundlagen des Inhaltes","Didaktische Analyse","Lernziele","Unterrichtsmethodische Überlegungen","Wahl der Unterrichtsmedien","Verlaufsplanung"]},
+  {v:"V3", title:"Informierender Unterrichtseinstieg (11 Elemente)", items:["Thema","Lernziele angeben","Lernziele begründen","Stundenablauf","Beamer/Tafel","Eventuell Mitplanung","Kurz halten","Positive Erwartungen","Persönliche Einstellung","Thema verknüpfen","Vorwissen benützen"]},
+  {v:"V3", title:"Artikulationsschema nach Roth (6 Stufen)", items:["Motivation","Schwierigkeiten (Probleme)","Lösung","Tun und Ausführen","Behalten und Einüben","Bereitstellen, Übertragung und Integration"]},
+  {v:"V3", title:"Artikulationsschema nach Aebli (4 Stufen)", items:["Problemlösendes Aufbauen","Durcharbeiten","Üben und Wiederholen","Anwenden"]},
+  {v:"V4", title:"Ablauf der Puzzle-Methode", items:["Lehrperson gliedert den Stoff und bereitet Material vor","SuS erarbeiten ihren Teil einzeln","Expertenrunde","Unterrichtsrunde"]},
+  {v:"V6", title:"Checkliste Lernaufgaben nach Frey (Prüfung 2024)", items:["Halbneu","Schriftlich abgefasst","Ohne Lehrerhilfe","Hinweise zum Vorgehen","Einzel-, Partner- oder Gruppenarbeit festlegen","Verfügbare Zeit festlegen","Massstab offenlegen","Kontext deklarieren"]}
+];
+
+/* Richtig / Falsch */
+const TFS = [
+  {v:"V5", s:"Auf Präsentationsfolien genügt eine Schriftgrösse von 16 pt. (Prüfung 2024)", t:false, why:"Mindestens 20 pt, besser 24 pt."},
+  {v:"V5", s:"Grün und Blau sind für Folien gut geeignet. (Prüfung 2024)", t:true, why:"So Fallers Lösung 2024."},
+  {v:"V5", s:"Grafiken und Bilder sind Texten auf Folien vorzuziehen. (Prüfung 2024)", t:true, why:"Grafiken prägen sich mehr ein als schriftliche Aussagen."},
+  {v:"V5", s:"Text auf Folien sollte man immer vorlesen. (Prüfung 2024)", t:false, why:"Stichworte zeigen, im Vortrag ausführen."},
+  {v:"V5", s:"Auf Folien sollte man höchstens 3 Farben verwenden.", t:true, why:"Farben als Gliederung oder Hervorhebung, nicht mehr als 3."},
+  {v:"V5", s:"Rote Schrift auf blauem Hintergrund ist gut lesbar.", t:false, why:"Nie rot auf blau oder blau auf rot."},
+  {v:"V5", s:"Gelb ist eine gute Schriftfarbe für Folien.", t:false, why:"Gelb sollte man vermeiden."},
+  {v:"V5", s:"Serifenschriften sind auf Folien besser lesbar als serifenlose.", t:false, why:"Serifenlos (Arial, Verdana, Tahoma) eignet sich gut."},
+  {v:"V5", s:"Eine Folie sollte mindestens 2–3 Minuten sichtbar sein.", t:true, why:"Sonst sind Folien «lerntechnisch inflationär»."},
+  {v:"V5", s:"Eingescannte Buchseiten sind praktische Folien.", t:false, why:"Folien müssen gestaltet werden, auch wenn das mehr Arbeit ist."},
+  {v:"V5", s:"Der Visualizer sollte höchstens 15 von 45 Minuten laufen.", t:true, why:"Sonst wird die Lektion langweilig."},
+  {v:"V5", s:"Beim Visualizer zeigt man mit einem Stab auf die Projektionswand.", t:false, why:"Auf dem Blatt zeigen, Gesicht zur Klasse."},
+  {v:"V5", s:"Ein gutes Tafelbild wird vor der Lektion vollständig angeschrieben.", t:false, why:"Es soll vor den Augen der SuS entstehen."},
+  {v:"V5", s:"Ca. 9 % der Bevölkerung haben eine Rot-Grün-Schwäche.", t:true, why:"So steht es im Skript."},
+  {v:"V4", s:"Aufgaben für Gruppen sollen einfacher sein als für Einzelne.", t:false, why:"Sie sollen komplexer sein; die zusätzliche Manpower soll gefordert werden."},
+  {v:"V4", s:"Ab etwa 7 Gruppenmitgliedern ist der kognitive Gewinn kaum noch spürbar.", t:true, why:"So Faller nach Dubs."},
+  {v:"V4", s:"Bei längeren Gruppenarbeiten in den ersten 5 Minuten nur beobachten.", t:true, why:"Auch bei Anfragen noch nicht eingreifen."},
+  {v:"V4", s:"Nach einer Gruppenarbeit sollte man immer eine Musterlösung abgeben.", t:false, why:"Nur in Ausnahmefällen, ohne Vorankündigung."},
+  {v:"V4", s:"Die didaktische Rekonstruktion tritt in höheren Klassen zurück.", t:false, why:"Die Reduktion tritt zurück, die Rekonstruktion bleibt wichtig."},
+  {v:"V4", s:"Die didaktische Rekonstruktion kann die Komplexität erhöhen.", t:true, why:"Durch interdisziplinäre, metakognitive und lebensweltliche Bezüge."},
+  {v:"V3", s:"Im BioETH-Schema kommt der Informationsinput vor der kognitiven Aktivierung.", t:false, why:"1 Kognitive Aktivierung, 2 Advance Organizer, 3 Informationsinput."},
+  {v:"V3", s:"Ein IU sollte nicht länger als 5 Minuten dauern.", t:true, why:"Element 7: kurz halten."},
+  {v:"V3", s:"In Phase 5 verteilt die Lehrperson ein fertiges Lösungsblatt.", t:false, why:"Keine «pfannenfertigen» Lösungsblätter."},
+  {v:"V2", s:"Ein Dispositionsziel muss in der Prüfung abgefragt werden können.", t:false, why:"Dispositionsziele sind nicht prüfbar."},
+  {v:"V2", s:"«Die SuS verstehen die Photosynthese» ist ein gutes operationalisiertes Lernziel.", t:false, why:"«verstehen» ist unklar, und es fehlen Bedingung und Massstab."},
+  {v:"V2", s:"Bei Anderson & Krathwohl ist K6 «erschaffen».", t:true, why:"K5 evaluieren, K6 erschaffen."},
+  {v:"V6", s:"Multiple-Choice-Fragen können höchstens K2 prüfen.", t:false, why:"Gut gemacht reichen sie bis K5."},
+  {v:"V6", s:"Eine gute MC-Frage hat 2–4 Distraktoren.", t:true, why:"Eine richtige Antwort und zwei bis vier falsche."},
+  {v:"V6", s:"Eine Lernaufgabe nach Frey wiederholt bekannten Stoff.", t:false, why:"Halbneu: neuer Stoff, keine Repetition."},
+  {v:"V1", s:"Für das Schulwesen ist in der Schweiz der Bund zuständig.", t:false, why:"Die Kantone (BV Art. 62)."},
+  {v:"V1", s:"Gemäss MAR 2024 haben MINT-Fächer zusammen mindestens 27 % der Unterrichtszeit.", t:true, why:"§18: Mathematik, Informatik, Biologie, Chemie, Physik."},
+  {v:"V1", s:"Time on Task ist bei Gruppenarbeit immer höher als bei Frontalunterricht.", t:false, why:"On Task heisst im Kopf mitmachen; das kann bei gutem Frontalunterricht eher der Fall sein."}
+];
+
+/* ===================== LOGIK ===================== */
+const MODES = [
+  {id:"cards", name:"Karteikarten", desc:"Frage lesen, Antwort aufdecken, selbst bewerten"},
+  {id:"sort",  name:"Zuordnen",     desc:"Begriff der richtigen Kategorie zuordnen"},
+  {id:"order", name:"Reihenfolge",  desc:"Listen in die richtige Reihenfolge bringen"},
+  {id:"tf",    name:"Richtig/Falsch", desc:"Aussagen prüfen, mit Begründung"},
+  {id:"mix",   name:"Prüfungsmix",  desc:"Alles gemischt"},
+  {id:"wrong", name:"Nur Fehler",   desc:"Was du falsch hattest, nochmals"}
+];
+
+let sel = new Set(Object.keys(LECTURES));
+let WRONG = loadWrong();
+let queue = [], idx = 0, score = 0, answered = false;
+
+function loadWrong(){ try{ return new Set(JSON.parse(localStorage.getItem("fd1-wrong")||"[]")); }catch(e){ return new Set(); } }
+function saveWrong(){ try{ localStorage.setItem("fd1-wrong", JSON.stringify([...WRONG])); }catch(e){} }
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* Alle Aufgaben als Einheiten mit stabiler ID */
+function allTasks(){
+  const t=[];
+  CARDS.forEach((c,i)=>t.push({type:"cards", id:"c"+i, v:c.v, data:c}));
+  SORTS.forEach((g,gi)=>g.items.forEach((it,ii)=>t.push({type:"sort", id:"s"+gi+"-"+ii, v:g.v, data:{group:g, item:it}})));
+  ORDERS.forEach((o,i)=>t.push({type:"order", id:"o"+i, v:o.v, data:o}));
+  TFS.forEach((f,i)=>t.push({type:"tf", id:"t"+i, v:f.v, data:f}));
+  return t;
+}
+const TASKS = allTasks();
+
+function available(mode){
+  return TASKS.filter(t=>sel.has(t.v) && (
+    mode==="mix" ? true :
+    mode==="wrong" ? WRONG.has(t.id) :
+    t.type===mode));
+}
+
+function renderHome(){
+  document.getElementById("play").hidden = true;
+  document.getElementById("home").hidden = false;
+  const L = document.getElementById("lectures");
+  const allOn = sel.size===Object.keys(LECTURES).length;
+  L.innerHTML = `<button class="chip ${allOn?'on':''}" data-all="1">Alle</button>` +
+    Object.entries(LECTURES).map(([k,n])=>`<button class="chip ${sel.has(k)&&!allOn?'on':''}" data-v="${k}">${k} ${esc(n)}</button>`).join("");
+  L.onclick = e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    if(b.dataset.all){ sel=new Set(Object.keys(LECTURES)); }
+    else { const v=b.dataset.v; if(allOn) sel=new Set([v]); else { sel.has(v)?sel.delete(v):sel.add(v); if(!sel.size) sel=new Set(Object.keys(LECTURES)); } }
+    renderHome();
+  };
+  const M = document.getElementById("modes");
+  M.innerHTML = MODES.map(m=>{ const n=available(m.id).length; return `<button class="mode" data-m="${m.id}" ${n?'':'disabled'}><b>${m.name}</b><span>${esc(m.desc)} · ${n}</span></button>`; }).join("");
+  M.onclick = e=>{ const b=e.target.closest("button"); if(!b||b.disabled) return; start(b.dataset.m); };
+  const tot = TASKS.filter(t=>sel.has(t.v)).length;
+  document.getElementById("stats").innerHTML = `${tot} Aufgaben in der Auswahl · ${[...WRONG].length} Fehler gespeichert` +
+    (WRONG.size?` · <a href="#" id="reset">Fehlerliste leeren</a>`:"");
+  const r=document.getElementById("reset"); if(r) r.onclick=e=>{e.preventDefault(); WRONG=new Set(); saveWrong(); renderHome();};
+}
+
+function start(mode){
+  queue = shuffle(available(mode)); idx=0; score=0;
+  document.getElementById("home").hidden = true;
+  document.getElementById("play").hidden = false;
+  renderTask();
+}
+
+function header(t){
+  const pct = Math.round(idx/queue.length*100);
+  return `<div class="topbar"><span><span class="tag">${t.v}</span> ${idx+1} / ${queue.length}</span><span>Punkte ${score}</span></div><div class="bar"><i style="width:${pct}%"></i></div>`;
+}
+
+function mark(t, ok){
+  if(ok){ score++; WRONG.delete(t.id); } else { WRONG.add(t.id); }
+  saveWrong();
+}
+
+function next(){ idx++; if(idx>=queue.length) return finish(); renderTask(); }
+
+function renderTask(){
+  answered=false;
+  const t = queue[idx], P = document.getElementById("play");
+  const quit = `<button class="btn ghost" id="quit">Zurück</button>`;
+  if(t.type==="cards"){
+    P.innerHTML = header(t) + `<div class="q">${esc(t.data.q)}</div>
+      <div class="answer" id="ans" hidden>${esc(t.data.a)}</div>
+      <div class="btns" id="b"><button class="btn" id="show">Antwort zeigen</button>${quit}</div>`;
+    document.getElementById("show").onclick=()=>{
+      document.getElementById("ans").hidden=false;
+      document.getElementById("b").innerHTML = `<button class="btn good" id="y">Gewusst</button><button class="btn bad" id="n">Nicht gewusst</button>${quit}`;
+      document.getElementById("y").onclick=()=>{mark(t,true);next();};
+      document.getElementById("n").onclick=()=>{mark(t,false);next();};
+      document.getElementById("quit").onclick=renderHome;
+    };
+  }
+  else if(t.type==="sort"){
+    const g=t.data.group, [term, right]=t.data.item;
+    let opts = g.cats.length<=5 ? g.cats.slice() : [right, ...shuffle(g.cats.filter(c=>c!==right)).slice(0,3)];
+    opts = g.cats.length<=5 ? opts : shuffle(opts);
+    P.innerHTML = header(t) + `<div class="small">${esc(g.title)}</div><div class="q">${esc(term)}</div><div class="small">${esc(g.prompt)}</div>
+      <div id="opts">${opts.map(o=>`<button class="opt" data-o="${esc(o)}">${esc(o)}</button>`).join("")}</div>
+      <div class="feedback" id="fb"></div><div class="btns">${quit}</div>`;
+    document.getElementById("opts").onclick=e=>{
+      const b=e.target.closest(".opt"); if(!b||answered) return; answered=true;
+      const ok = b.dataset.o===right;
+      document.querySelectorAll(".opt").forEach(x=>{ if(x.dataset.o===right) x.classList.add("right"); else if(x===b) x.classList.add("wrong"); });
+      document.getElementById("fb").className="feedback "+(ok?"ok":"no");
+      document.getElementById("fb").textContent = ok?"Richtig.":"Falsch. Richtig ist: "+right;
+      mark(t,ok);
+      document.querySelector(".btns").innerHTML = `<button class="btn" id="nx">Weiter</button>${quit}`;
+      document.getElementById("nx").onclick=next; document.getElementById("quit").onclick=renderHome;
+    };
+  }
+  else if(t.type==="order"){
+    let cur = shuffle(t.data.items);
+    if(cur.every((x,i)=>x===t.data.items[i]) && cur.length>1) cur=cur.reverse();
+    const draw=(check)=>{
+      const off = t.data.title.includes("0–7")?0:1;
+      const ul = cur.map((x,i)=>{
+        const cls = check ? (x===t.data.items[i]?"right":"wrong") : "";
+        return `<li class="${cls}"><span class="n">${i+off}.</span><span class="t">${esc(x)}</span>${check?"":`<button data-up="${i}" aria-label="nach oben">↑</button><button data-dn="${i}" aria-label="nach unten">↓</button>`}</li>`;
+      }).join("");
+      P.innerHTML = header(t) + `<div class="q">${esc(t.data.title)}</div><div class="small">Mit den Pfeilen in die richtige Reihenfolge bringen.</div>
+        <ul class="order-list" id="ol">${ul}</ul><div class="feedback" id="fb"></div>
+        <div class="btns">${check?`<button class="btn" id="nx">Weiter</button>`:`<button class="btn" id="chk">Prüfen</button>`}${quit}</div>`;
+      document.getElementById("quit").onclick=renderHome;
+      if(check){
+        const n = cur.filter((x,i)=>x===t.data.items[i]).length, ok = n===cur.length;
+        const fb=document.getElementById("fb"); fb.className="feedback "+(ok?"ok":"no");
+        fb.innerHTML = ok ? "Alles richtig." : `${n} von ${cur.length} richtig. Korrekte Reihenfolge:<br>` + t.data.items.map((x,i)=>`${i+off}. ${esc(x)}`).join("<br>");
+        document.getElementById("nx").onclick=next;
+        return ok;
+      }
+      document.getElementById("ol").onclick=e=>{
+        const b=e.target.closest("button"); if(!b) return;
+        if(b.dataset.up){ const i=+b.dataset.up; if(i>0){[cur[i-1],cur[i]]=[cur[i],cur[i-1]];} }
+        if(b.dataset.dn){ const i=+b.dataset.dn; if(i<cur.length-1){[cur[i+1],cur[i]]=[cur[i],cur[i+1]];} }
+        draw(false);
+      };
+      document.getElementById("chk").onclick=()=>{ const ok=draw(true); mark(t,ok); };
+    };
+    draw(false);
+  }
+  else if(t.type==="tf"){
+    const f=t.data;
+    P.innerHTML = header(t) + `<div class="q">${esc(f.s)}</div>
+      <div id="opts"><button class="opt" data-a="1">Richtig</button><button class="opt" data-a="0">Falsch</button></div>
+      <div class="feedback" id="fb"></div><div class="btns">${quit}</div>`;
+    document.getElementById("opts").onclick=e=>{
+      const b=e.target.closest(".opt"); if(!b||answered) return; answered=true;
+      const choice = b.dataset.a==="1", ok = choice===f.t;
+      document.querySelectorAll(".opt").forEach(x=>{ if((x.dataset.a==="1")===f.t) x.classList.add("right"); else if(x===b) x.classList.add("wrong"); });
+      const fb=document.getElementById("fb"); fb.className="feedback "+(ok?"ok":"no");
+      fb.textContent = (ok?"Richtig. ":"Falsch. ") + f.why;
+      mark(t,ok);
+      document.querySelector(".btns").innerHTML = `<button class="btn" id="nx">Weiter</button>${quit}`;
+      document.getElementById("nx").onclick=next; document.getElementById("quit").onclick=renderHome;
+    };
+  }
+  const q=document.getElementById("quit"); if(q) q.onclick=renderHome;
+}
+
+function finish(){
+  const pct = queue.length ? Math.round(score/queue.length*100) : 0;
+  document.getElementById("play").innerHTML = `<div class="small">Durchgang beendet</div>
+    <div class="result">${score} / ${queue.length}</div>
+    <div>${pct} % richtig · ${WRONG.size} Fehler gespeichert</div>
+    <div class="btns"><button class="btn" id="again">Fehler wiederholen</button><button class="btn ghost" id="home2">Startseite</button></div>`;
+  document.getElementById("home2").onclick=renderHome;
+  const a=document.getElementById("again");
+  if(!available("wrong").length){ a.disabled=true; a.textContent="Keine Fehler offen"; }
+  a.onclick=()=>start("wrong");
+}
+
+renderHome();
+</script>
+</body>
+</html>
